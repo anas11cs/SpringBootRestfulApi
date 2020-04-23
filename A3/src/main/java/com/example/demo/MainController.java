@@ -9,8 +9,9 @@ package com.example.demo;
 import java.util.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.stereotype.Controller;
-import org.springframework.http.ResponseEntity;
+// IMPORTS NOT USED
+/* import org.springframework.stereotype.Controller;
+import org.springframework.http.ResponseEntity;*/
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -67,7 +68,17 @@ public class MainController {
                if(userservice.GetPassword(email).contentEquals(password))
                {
                   UserModel u=new UserModel(userservice.getCompleteUser(email));
-                  if(LoggedIns.contains(email))
+//                    String search = email;
+//                    Integer ok=0;
+//                    for(String s : LoggedIns)
+//                    {
+//                        if(s.contains(search))
+//                        {
+//                            ok=1;
+//                        }
+//                        ok=0;
+//                    }
+                  if(!LoggedIns.contains(email))
                   {
                       LoggedIns.add(email);
                       return "<User Logged In>\nName:"+u.name+"\nEmail:"+u.email+"\nGender:"+u.gender+"\nDateOfBirth:"
@@ -85,7 +96,6 @@ public class MainController {
     String deleteUser(@PathVariable("email") String email)
     {
             // FOR ObjectNode import https://fasterxml.github.io/jackson-databind/javadoc/2.6/com/fasterxml/jackson/databind/node/ObjectNode.html
-
                if(LoggedIns.contains(email))
                {
                   if(userservice.deleteUser(email)==false)
@@ -104,9 +114,10 @@ public class MainController {
                }
     }
     @PostMapping(value="/logout")
-    String LogoutUser(@RequestBody String email)
+    String LogoutUser(@RequestBody ObjectNode credentials)
     {
             // FOR ObjectNode import https://fasterxml.github.io/jackson-databind/javadoc/2.6/com/fasterxml/jackson/databind/node/ObjectNode.html
+              String email = credentials.get("email").asText();
                if(LoggedIns.contains(email))
                {
                     LoggedIns.remove(email);
@@ -117,13 +128,14 @@ public class MainController {
                     return "Please login In first";
                }
     }
+    
     @PutMapping(value="/update/{email}")
     String UpdateUser(@PathVariable("email") String email,@RequestBody UserModel User)
     {
             // FOR ObjectNode import https://fasterxml.github.io/jackson-databind/javadoc/2.6/com/fasterxml/jackson/databind/node/ObjectNode.html
 
-//               if(LoggedIns.contains(email))
-//               {
+               if(LoggedIns.contains(email))
+               {
                    if(User.email.contentEquals(email))
                    {
                     UserModel u = userservice.updateUser(User);
@@ -134,38 +146,57 @@ public class MainController {
                    {
                        return "Email can't be Updated";
                    }
-//               }
-//               else
-//               {
-//                    return "Please login In first";
-//               }
+               }
+               else
+              {
+                   return "Please login In first";
+              }
     }
     @PutMapping(value="/updatepassword/{email}")
     String UpdateUserPassword(@PathVariable("email") String email,@RequestBody ObjectNode credentials)
     {
-           String oldpassword = credentials.get("oldpassword").asText();
+           String oldpassword = credentials.get("password").asText();
            String password = credentials.get("newpassword").asText();
            String confirmpassword = credentials.get("confirmnewpassword").asText();
            if(!password.contentEquals(confirmpassword))
            {
                return "Password Confirmation Error";
            }
-           boolean responsevalidation=userservice.validate(email);
-           if(responsevalidation==false)
-           {
-               return "Invalid Email";
-           }
-           if(userservice.GetPassword(email).contentEquals(oldpassword))
-           {
-                UserModel u=new UserModel(userservice.getCompleteUser(email));
-                u.setPassword(password);
-                u=userservice.updateUser(u);
-                return "<User Password Updated>\nName:"+u.name+"\nEmail:"+u.email+"\nPassword:"+u.password;
-           }
-           else
-           {
-               return "Wrong Password(Old) !";
-           }
+               if(LoggedIns.contains(email))
+               {
+                    if(userservice.GetPassword(email).contentEquals(oldpassword))
+                    {
+                        UserModel u=new UserModel(userservice.getCompleteUser(email));
+                        u.setPassword(password);
+                        u=userservice.updateUser(u);
+                        return "<User Password Updated>\nName:"+u.name+"\nEmail:"+u.email+"\nPassword:"+u.password;
+                    }
+                    else
+                    {
+                         return "Wrong Password(Old) !";
+                    }
+               }
+               else
+              {
+                   return "Please login In first";
+              }
+    }
+    
+    // TESTER FUNCTION =================================================================================
+    @PostMapping(value="/logoute")
+    List<String> LogoutUserc(@RequestBody String email)
+    {
+            // FOR ObjectNode import https://fasterxml.github.io/jackson-databind/javadoc/2.6/com/fasterxml/jackson/databind/node/ObjectNode.html
+//               if(!LoggedIns.contains(email))
+//               {
+//                    LoggedIns.remove(email);
+//                    return "<User with Email:"+email+" Logged Out>";
+//               }
+//               else
+//               {
+//                    return "Please login In first";
+//               }
+        return LoggedIns;
     }
 //@PostMapping("/")
 //public ResponseEntity<Student> create(@RequestBody Student student) throws URISyntaxException {
